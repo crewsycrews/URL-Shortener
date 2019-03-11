@@ -1,0 +1,18 @@
+index:
+   path: /{_format}
+   controller: App\Controller\MainController::setUrl
+   methods: GET
+   # defaults:
+   #    _format: json
+   requirements: 
+      _format: json
+store:
+   path: /{urlToStore}
+   controller: App\Controller\MainController::storeUrl
+   defaults:
+      urlToStore: ''
+   methods: POST
+retrieve:
+   path: /{previouslyStoredUrl}
+   controller: App\Controller\MainController::retrieveUrl
+   methods: GET
