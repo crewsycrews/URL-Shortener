@@ -1,18 +1,32 @@
 index:
-   path: /{_format}
-   controller: App\Controller\MainController::setUrl
+   path: /
+   controller: App\Controller\MainController::mainResponse
    methods: GET
-   # defaults:
-   #    _format: json
-   requirements: 
-      _format: json
-store:
-   path: /{urlToStore}
-   controller: App\Controller\MainController::storeUrl
    defaults:
-      urlToStore: ''
+      _format: json
+   # requirements: 
+   #    _format: json
+generateUrl:
+   path: /generate
+   controller: App\Controller\MainController::generateUrl
+   defaults: { urlToStore: '', _format: json }
+   # requirements:
+   #    _format: json
    methods: POST
-retrieve:
-   path: /{previouslyStoredUrl}
-   controller: App\Controller\MainController::retrieveUrl
-   methods: GET
+# generateCustomUrl:
+#    path: /generateCustom/{urlToStore}/{desiredUrl}
+#    controller: App\Controller\MainController::generateCustomUrl
+#    defaults:
+#       urlToStore: ''
+#       _format: json
+#    methods: POST
+# retrieveUrl:
+#    path: /get/{previouslyStoredUrl}
+#    controller: App\Controller\MainController::retrieveUrl
+#    defaults:
+#       _format: json
+#    methods: GET
+# redirect:
+#    path: /{previouslyStoredUrl}
+#    controller: App\Controller\MainController::redirect
+#    methods: GET
