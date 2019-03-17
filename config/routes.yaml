@@ -16,6 +16,6 @@ retrieveUrl:
    defaults:
       _format: json
 redirectTo:
-   path: /{previouslyStoredUrl}
+   path: /{previouslyStoredUri}
    controller: App\Controller\MainController::redirectTo
    methods: GET

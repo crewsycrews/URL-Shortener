@@ -16,13 +16,17 @@ class MainController extends AbstractController
     private $description;
     private $methods;
     private $host;
+    private $logger;
+    private $referer;
     
-    public function __construct()
+    public function __construct(LoggerInterface $logger)
     {
         $this->host = $_SERVER['HTTP_HOST'];
+        $this->referer = $_SERVER['REMOTE_ADDR'];
         $this->serviceName = $_ENV['APP_NAME'];
         $this->version = $_ENV['APP_VERSION'];
         $this->description = $_ENV['APP_DESCRIPTION'];
+        $this->logger = $logger;
         $this->methods = [
             "generateUrl"=> [
                 "URL"=> "/generate",
@@ -66,7 +70,7 @@ class MainController extends AbstractController
             curl_exec($ch);
             $responseCode = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
             if ($responseCode < 200 || $responseCode >= 400) {
-                throw new Exception("Whoops! Your URL is unreachable, or you don't specify 'url' key in request body $responseCode");
+                throw new Exception("Whoops! Your URL is unreachable, or you don't specify 'url' key in request body");
             }
             curl_close($ch);
             $shortUri = $this->storeUrlToRedis($urlToStore, $uriToStore);
@@ -77,10 +81,10 @@ class MainController extends AbstractController
                 ]
             );
         } catch (Exception $e) {
+            $this->logging($e->getMessage());
             return new JsonResponse(
                 [
-                "Error" => $e->getMessage(),
-                "hah" => $urlToStore
+                "Error" => $e->getMessage()
                 ]
             );
         }
@@ -91,7 +95,13 @@ class MainController extends AbstractController
         $redisClient = new Client();
         if (empty($uriToStore)) {
             $uriToStore = substr(md5($urlToStore), 0, 8);
+        } else {
+            $url = $redisClient->hget($uriToStore, "url");
+            if (!empty($url)) {
+                throw new Exception("Sorry, your short_uri is already exists, try another");
+            }
         }
+        
         $redisClient->hmset($uriToStore, "url", $urlToStore, "short", $uriToStore);
         $redisClient->expire($uriToStore, strtotime("+15 days"));
         $shortUri = $redisClient->hget($uriToStore, "short");
@@ -100,12 +110,33 @@ class MainController extends AbstractController
         return $shortUri;
     }
 
-    public function redirectTo($previouslyStoredUrl, LoggerInterface $logger)
+    public function redirectTo($previouslyStoredUri)
     {
-        $redisClient = new Client();
-        $where = $redisClient->hget($previouslyStoredUrl, "url");
+        try {
+            $redisClient = new Client();
+            $where = $redisClient->hget($previouslyStoredUri, "url");
+            if (empty($where)) {
+                throw new Exception("Wrong URL! Generate Short URL first");
+            }
+            $redisClient->hincrby($previouslyStoredUri, "count", 1);
+            $redisClient->bgsave();
+            $redisClient->quit();
+        } catch (Exception $e) {
+            $this->logging($e->getMessage());
+            return new JsonResponse(
+                [
+                "Error" => $e->getMessage()
+                ]
+            );
+        }
         
         return $this->redirect("http://$where");
+    }
+
+
+    private function logging(string $message)
+    {
+        return $this->logger->error("RequestFrom:[$this->referer]:$message");
     }
 
     public function mainResponse()
