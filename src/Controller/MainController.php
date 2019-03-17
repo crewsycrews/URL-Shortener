@@ -101,7 +101,8 @@ class MainController extends AbstractController
                 throw new Exception("Sorry, your short_uri is already exists, try another");
             }
         }
-        
+        $uriToStore = \urlencode($uriToStore);
+        $urlToStore = \urlencode($urlToStore);
         $redisClient->hmset($uriToStore, "url", $urlToStore, "short", $uriToStore);
         $redisClient->expire($uriToStore, strtotime("+15 days"));
         $shortUri = $redisClient->hget($uriToStore, "short");
@@ -114,9 +115,10 @@ class MainController extends AbstractController
     {
         try {
             $redisClient = new Client();
+            $previouslyStoredUri = \urlencode($previouslyStoredUri);
             $where = $redisClient->hget($previouslyStoredUri, "url");
             if (empty($where)) {
-                throw new Exception("Wrong URL! Generate Short URL first");
+                throw new Exception("Wrong URL! Generate Short URL first $previouslyStoredUri");
             }
             $redisClient->hincrby($previouslyStoredUri, "count", 1);
             $redisClient->bgsave();
