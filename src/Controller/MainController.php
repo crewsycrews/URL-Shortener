@@ -2,11 +2,14 @@
 // src/Controller/LuckyController.php
 namespace App\Controller;
 
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Psr\Log\LoggerInterface;
 use Predis\Client;
+use Exception;
 
-class MainController
+class MainController extends AbstractController
 {
     private $serviceName;
     private $version;
@@ -22,14 +25,13 @@ class MainController
         $this->description = $_ENV['APP_DESCRIPTION'];
         $this->methods = [
             "generateUrl"=> [
-                "URL"=> "/generate/{your_url}",
-                "HTTP-Method"=> "POST",
+                "URL"=> "/generate",
+                "HTTP-Method" => "POST",
+                "Request body" => [
+                    "url" => "your long url",
+                    "short_uri" => "your desired short uri to be set(optional)"
+                ],
                 "Response"=> "http://$this->host/{short_uri}"
-            ],
-            "generateCustomUrl"=> [
-                "URL"=> "/generateCustom/{your_long_url}/{your_desired_uri}",
-                "HTTP-Method"=> "POST",
-                "Response"=> "http://$this->host/{your_desired_uri}"
             ],
             "getUrl"=> [
                 "URL"=> "/get/{generated_url}",
@@ -39,55 +41,73 @@ class MainController
         ];
     }
 
-    public function generateUrl(Request $request)
+    public function generate(Request $request)
     {
         try {
-            $body = json_decode($request->getContent(), true);
-            if ($body === null) {
-                throw new \Exception("Content type of body should be an application/json");
+            // checking request method, expecting only POST
+            $method = $request->getMethod();
+            if ($method !== 'POST') {
+                throw new Exception("Wrong method, you should use POST to generate URLs");
             }
-            $urlToStore = key_exists('url', $body) ? $body['url'] : '';
+
+            // checking request body json format
+            $body = json_decode($request->getContent(), true);
+            if ($body === null || $request->headers->get('content-type') !== 'application/json') {
+                throw new Exception("Content-Type of request body should be an application/json");
+            }
+
+            // splice protocol definition
+            $regexp = '/https?:\/\//iu';
+            $urlToStore = key_exists('url', $body) ? preg_replace($regexp, '', $body['url']) : '';
+            $uriToStore = key_exists('short_uri', $body) ? $body['short_uri'] : '';
+            // validating url evailability
             $ch = curl_init($urlToStore);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_exec($ch);
             $responseCode = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
             if ($responseCode < 200 || $responseCode >= 400) {
-                throw new \Exception("Whoops! Your URL is unreachable, or you don't specify url key in request body");
+                throw new Exception("Whoops! Your URL is unreachable, or you don't specify 'url' key in request body $responseCode");
             }
-            $redisClient = new Client();
-            $redisClient->set($urlToStore, substr(md5($urlToStore), 0, 8));
-            $redisClient->expire($urlToStore, strtotime("+15 days"));
-            $value = $redisClient->get($urlToStore);
-            $redisClient->bgsave();
-            $redisClient->quit();
+            curl_close($ch);
+            $shortUri = $this->storeUrlToRedis($urlToStore, $uriToStore);
             return new JsonResponse(
                 [
-                "GeneratedUrl" => "http://$this->host/$value",
+                "GeneratedUrl" => "http://$this->host/$shortUri",
+                "uri" => "$shortUri"
                 ]
             );
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return new JsonResponse(
                 [
-                "Error" => $e->getMessage()
+                "Error" => $e->getMessage(),
+                "hah" => $urlToStore
                 ]
             );
         }
     }
-
-    // public function generateCustomUrl(string $urlToStore, string $desiredUrl)
-    // {
-    //     $redisClient = new Client();
-    //     $redisClient->set($urlToStore, $desiredUrl);
-    //     $redisClient->expire($urlToStore, strtotime("+15 days"));
-    //     $value = $redisClient->get($urlToStore);
-    //     $redisClient->bgsave();
-    //     $redisClient->quit();
-    //     return new JsonResponse(
-    //         [
-    //         "GeneratedUrl" => "http://$this->host/$value"
-    //         ]
-    //     );
-    // }
     
+    private function storeUrlToRedis(string $urlToStore, string $uriToStore = '')
+    {
+        $redisClient = new Client();
+        if (empty($uriToStore)) {
+            $uriToStore = substr(md5($urlToStore), 0, 8);
+        }
+        $redisClient->hmset($uriToStore, "url", $urlToStore, "short", $uriToStore);
+        $redisClient->expire($uriToStore, strtotime("+15 days"));
+        $shortUri = $redisClient->hget($uriToStore, "short");
+        $redisClient->bgsave();
+        $redisClient->quit();
+        return $shortUri;
+    }
+
+    public function redirectTo($previouslyStoredUrl, LoggerInterface $logger)
+    {
+        $redisClient = new Client();
+        $where = $redisClient->hget($previouslyStoredUrl, "url");
+        
+        return $this->redirect("http://$where");
+    }
+
     public function mainResponse()
     {
         return new JsonResponse(
