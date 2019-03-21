@@ -1,0 +1,20 @@
+index:
+   path: /api
+   controller: App\Controller\MainController::mainResponse
+   defaults: { _format: json }
+   requirements:
+      _format: json
+generate:
+   path: /api/generate
+   controller: App\Controller\MainController::generate
+   defaults: { _format: json }
+   requirements:
+      _format: json
+retrieveUrl:
+   path: /api/{previouslyStoredUrl}
+   controller: App\Controller\MainController::retrieveUrl
+   methods: GET
+redirectTo:
+   path: /{previouslyStoredUri}
+   controller: App\Controller\MainController::redirectTo
+   methods: GET
