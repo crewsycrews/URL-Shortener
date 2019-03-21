@@ -1,20 +1,26 @@
 <!--The content below is only a placeholder and can be replaced.-->
-<div style="text-align:center">
-  <h1>
-    Welcome to {{ title }}!
-  </h1>
-  <img width="300" alt="Angular Logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTAgMjUwIj4KICAgIDxwYXRoIGZpbGw9IiNERDAwMzEiIGQ9Ik0xMjUgMzBMMzEuOSA2My4ybDE0LjIgMTIzLjFMMTI1IDIzMGw3OC45LTQzLjcgMTQuMi0xMjMuMXoiIC8+CiAgICA8cGF0aCBmaWxsPSIjQzMwMDJGIiBkPSJNMTI1IDMwdjIyLjItLjFWMjMwbDc4LjktNDMuNyAxNC4yLTEyMy4xTDEyNSAzMHoiIC8+CiAgICA8cGF0aCAgZmlsbD0iI0ZGRkZGRiIgZD0iTTEyNSA1Mi4xTDY2LjggMTgyLjZoMjEuN2wxMS43LTI5LjJoNDkuNGwxMS43IDI5LjJIMTgzTDEyNSA1Mi4xem0xNyA4My4zaC0zNGwxNy00MC45IDE3IDQwLjl6IiAvPgogIDwvc3ZnPg==">
-</div>
-<h2>Here are some links to help you start: </h2>
-<ul>
-  <li>
-    <h2><a target="_blank" rel="noopener" href="https://angular.io/tutorial">Tour of Heroes</a></h2>
-  </li>
-  <li>
-    <h2><a target="_blank" rel="noopener" href="https://angular.io/cli">CLI Documentation</a></h2>
-  </li>
-  <li>
-    <h2><a target="_blank" rel="noopener" href="https://blog.angular.io/">Angular blog</a></h2>
-  </li>
-</ul>
-
+<header class="mb-auto"></header>
+<main role="main" class="main">
+  <div>
+    <h1>
+      {{ title }}
+    </h1>
+    <div class="intended">
+      <i class="nes-pokeball"></i><i class="nes-octocat animate"></i><i class="nes-pokeball"></i>
+    </div>
+    <div class="nes-field">
+        <label for="url_field">Enter your ugly long URL:</label>
+        <input #url type="text" id="url_field" class="nes-input">
+    </div>
+    <div class="nes-field">
+        <label for="uri_field">Enter your desired fancy short URI:</label>
+        <input #custom_uri type="text" id="uri_field" (keyup)="validateUri(custom_uri.value)" class="nes-input {{ validClass }}">
+    </div>
+    <button type="button" class="nes-btn is-success {{ validClass == 'is-error' ? 'is-disabled' : '' }}" [disabled]="validClass === 'is-error'" (click)="generateUri(url.value,custom_uri.value)">Generate</button>
+    <div class="fix-height intended">
+      <p *ngIf="generatedUrl">Here is your generated URL: <a href="{{ generatedUrl }}">{{ generatedUrl }}</a></p>
+      <p *ngIf="error" class="nes-text is-error">{{ error }}</p>
+    </div>
+  </div>
+</main>
+<footer class="mt-auto"></footer>
