@@ -13,8 +13,7 @@ generate:
 retrieveUrl:
    path: /api/{previouslyStoredUrl}
    controller: App\Controller\MainController::retrieveUrl
-   defaults:
-      _format: json
+   methods: GET
 redirectTo:
    path: /{previouslyStoredUri}
    controller: App\Controller\MainController::redirectTo

@@ -29,18 +29,18 @@ class MainController extends AbstractController
         $this->logger = $logger;
         $this->methods = [
             "generateUrl"=> [
-                "URL"=> "/generate",
+                "URL"=> "/api/generate",
                 "HTTP-Method" => "POST",
                 "Request body" => [
                     "url" => "your long url",
-                    "short_uri" => "your desired short uri to be set(optional)"
+                    "custom_uri" => "your desired short uri to be set(optional)"
                 ],
-                "Response"=> "http://$this->host/{short_uri}"
+                "Response"=> "http://$this->host/{custom_uri}"
             ],
-            "getUrl"=> [
-                "URL"=> "/get/{generated_url}",
+            "retrieveUrl"=> [
+                "URL"=> "/api/{generated_url}",
                 "HTTP-Method"=> "GET",
-                "Response"=> "{your_url}"
+                "Response"=> "True or Error"
             ]
         ];
     }
@@ -63,14 +63,14 @@ class MainController extends AbstractController
             // splice protocol definition
             $regexp = '/https?:\/\//iu';
             $urlToStore = key_exists('url', $body) ? preg_replace($regexp, '', $body['url']) : '';
-            $uriToStore = key_exists('short_uri', $body) ? $body['short_uri'] : '';
+            $uriToStore = key_exists('custom_uri', $body) ? $body['custom_uri'] : '';
             // validating url evailability
             $ch = curl_init($urlToStore);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_exec($ch);
             $responseCode = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
             if ($responseCode < 200 || $responseCode >= 400) {
-                throw new Exception("Whoops! Your URL is unreachable, or you don't specify 'url' key in request body");
+                throw new Exception("Whoops! Your URL is unreachable, or you don't specify 'url' key");
             }
             curl_close($ch);
             $shortUri = $this->storeUrlToRedis($urlToStore, $uriToStore);
@@ -78,14 +78,16 @@ class MainController extends AbstractController
                 [
                 "GeneratedUrl" => "http://$this->host/$shortUri",
                 "uri" => "$shortUri"
-                ]
+                ],
+                200
             );
         } catch (Exception $e) {
             $this->logging($e->getMessage());
             return new JsonResponse(
                 [
                 "Error" => $e->getMessage()
-                ]
+                ],
+                400
             );
         }
     }
@@ -98,7 +100,7 @@ class MainController extends AbstractController
         } else {
             $url = $redisClient->hget($uriToStore, "url");
             if (!empty($url)) {
-                throw new Exception("Sorry, your short_uri is already exists, try another");
+                throw new Exception("Sorry, your custom_uri is already exists, try another");
             }
         }
         $uriToStore = \urlencode($uriToStore);
@@ -111,14 +113,30 @@ class MainController extends AbstractController
         return $shortUri;
     }
 
-    public function redirectTo($previouslyStoredUri)
+    public function retrieveUrl(string $previouslyStoredUrl)
+    {
+        $redisClient = new Client();
+        if (empty($redisClient->keys($previouslyStoredUrl))) {
+            return new JsonResponse(
+                ["Error" => 'Provided Uri does not exist in DB'],
+                404
+            );
+        } else {
+            return new JsonResponse(
+                ["Success" => true],
+                200
+            );
+        };
+    }
+
+    public function redirectTo(string $previouslyStoredUri)
     {
         try {
             $redisClient = new Client();
             $previouslyStoredUri = \urlencode($previouslyStoredUri);
             $where = $redisClient->hget($previouslyStoredUri, "url");
             if (empty($where)) {
-                throw new Exception("Wrong URL! Generate Short URL first $previouslyStoredUri");
+                throw new Exception("Wrong URL! Generate Short URL first");
             }
             $redisClient->hincrby($previouslyStoredUri, "count", 1);
             $redisClient->bgsave();
@@ -128,10 +146,11 @@ class MainController extends AbstractController
             return new JsonResponse(
                 [
                 "Error" => $e->getMessage()
-                ]
+                ],
+                400
             );
         }
-        
+        $where = \urldecode($where);
         return $this->redirect("http://$where");
     }
 
@@ -141,15 +160,32 @@ class MainController extends AbstractController
         return $this->logger->error("RequestFrom:[$this->referer]:$message");
     }
 
-    public function mainResponse()
+    public function mainResponse(Request $request)
     {
-        return new JsonResponse(
-            [
-            "Service" => $this->serviceName,
-            "Version" => $this->version,
-            "Description" => $this->description,
-            "Methods" => $this->methods
-            ]
-        );
+        try {
+            // checking request method, expecting only GET
+            $method = $request->getMethod();
+            if ($method !== 'GET') {
+                throw new Exception("Wrong method, you should use GET here");
+            }
+            return new JsonResponse(
+                [
+                "Service" => $this->serviceName,
+                "Version" => $this->version,
+                "Description" => $this->description,
+                "Methods" => $this->methods
+                ],
+                200
+            );
+        } catch (Exception $e) {
+            $this->logging($e->getMessage());
+            return new JsonResponse(
+                [
+                "Error" => $e->getMessage()
+                ],
+                400
+            );
+        }
+        
     }
 }
