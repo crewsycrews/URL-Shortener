@@ -17,7 +17,11 @@ export class MainComponent implements OnInit {
   validClass: string;
   appUrl: string;
   constructor(private api: ApiService, @Inject(DOCUMENT) private document) {
-    this.appUrl = this.document.location.protocol +'//'+ this.document.location.hostname + ':' + environment.devPort;
+    if(environment.devPort){
+      this.appUrl = this.document.location.protocol +'//'+ this.document.location.hostname + ':' + environment.devPort;
+    } else {
+      this.appUrl = this.document.location.protocol +'//'+ this.document.location.hostname;
+    }
   }
 
   generateUri(url: string, custom_uri?: string) {
