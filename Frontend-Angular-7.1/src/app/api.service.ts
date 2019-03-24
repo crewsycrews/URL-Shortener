@@ -9,7 +9,7 @@ import { environment } from '../environments/environment';
 })
 export class ApiService {
   apiUrl = environment.api;
-  generateUrl = this.apiUrl + "generate";
+  generateUrl = this.apiUrl + "/generate";
 
   constructor(private http: HttpClient) { }
 

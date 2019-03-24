@@ -1,29 +1,6 @@
 <!--The content below is only a placeholder and can be replaced.-->
 <header class="mb-auto"></header>
 <main role="main" class="main">
-  <div>
-    <h1>
-      {{ title }}
-    </h1>
-    <div class="intended">
-      <i class="nes-pokeball"></i><i class="nes-octocat animate"></i><i class="nes-pokeball"></i>
-    </div>
-    <div class="nes-field">
-        <label for="url_field">Enter your ugly long URL:</label>
-        <input #url type="text" id="url_field" class="nes-input">
-    </div>
-    <div class="nes-field">
-        <label for="uri_field">Enter your desired fancy short URI:</label>
-        <input #custom_uri type="text" id="uri_field" (keyup)="validateUri(custom_uri.value)" class="nes-input {{ validClass }}" maxlength="8">
-    </div>
-    <button type="button" class="nes-btn is-success {{ validClass == 'is-error' ? 'is-disabled' : '' }}" style="color: #171773" [disabled]="validClass === 'is-error'" (click)="generateUri(url.value,custom_uri.value)">Generate</button>
-    <div class="fix-height intended">
-      <p *ngIf="generatedUrl" class="result">Here is your generated URL: 
-        <a href="{{ generatedUrl }}" target="_blank">{{ generatedUrl }}</a>
-        <img src="/assets/img/copy.png" class="copy" ngxClipboard [cbContent]="generatedUrl">
-      </p>
-      <p *ngIf="error" class="nes-text is-error">{{ error }}</p>
-    </div>
-  </div>
+  <router-outlet></router-outlet>
 </main>
 <footer class="mt-auto"></footer>
