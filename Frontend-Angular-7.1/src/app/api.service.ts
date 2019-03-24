@@ -1,15 +1,14 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse, HttpEventType } from '@angular/common/http';
-import { Observable, throwError, Subject } from 'rxjs';
-import { catchError, retry } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../environments/environment';
+
 
 @Injectable({
   providedIn: 'root'
 })
 export class ApiService {
-
-  url = 'http://localhost:8000/';
-  apiUrl = this.url + 'api/';
+  apiUrl = environment.api;
   generateUrl = this.apiUrl + "generate";
 
   constructor(private http: HttpClient) { }
