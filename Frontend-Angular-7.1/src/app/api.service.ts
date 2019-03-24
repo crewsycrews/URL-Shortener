@@ -8,8 +8,8 @@ import { environment } from '../environments/environment';
   providedIn: 'root'
 })
 export class ApiService {
-  apiUrl = environment.api;
-  generateUrl = this.apiUrl + "/generate";
+  apiUrl = environment.api + '/';
+  generateUrl = this.apiUrl + "generate";
 
   constructor(private http: HttpClient) { }
 
@@ -24,5 +24,9 @@ export class ApiService {
   getUri(uri: string): Observable<any> {
     return this.http.get(
       this.apiUrl + uri, { observe: 'response' });
+  }
+  redirect(uri: string): Observable<any> {
+    return this.http.get(
+      this.apiUrl.slice(0, this.apiUrl.length - 4) + uri, { observe: 'response' });
   }
 }

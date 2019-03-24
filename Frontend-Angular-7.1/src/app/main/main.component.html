@@ -19,6 +19,6 @@
       <a href="{{ appUrl + '/' + generatedUri }}" target="_blank">{{ appUrl + '/' + generatedUri }}</a>
       <img src="/assets/img/copy.png" class="copy" ngxClipboard [cbContent]="appUrl + '/' + generatedUri">
     </p>
-    <p *ngIf="error" class="nes-text is-error">{{ error }}</p>
+    <p *ngIf="error" class="nes-text is-error-info">{{ error }}</p>
   </div>
 </div>

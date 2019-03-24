@@ -43,10 +43,21 @@ class MainController extends AbstractController
                 "URL"=> "/api/{generated_url}",
                 "HTTP-Method"=> "GET",
                 "Response"=> "True or Error"
+            ],
+            "redirectTo"=> [
+                "URL"=> "/{generated_url}",
+                "HTTP-Method"=> "GET",
+                "Response"=> "URL to redirect or Error"
             ]
         ];
     }
 
+    /**
+     * Short uri generator
+     *
+     * @param Request $request
+     * @return JsonResponse []
+     */
     public function generate(Request $request)
     {
         try {
@@ -66,6 +77,7 @@ class MainController extends AbstractController
             $regexp = '/https?:\/\//iu';
             $urlToStore = key_exists('url', $body) ? preg_replace($regexp, '', $body['url']) : '';
             $uriToStore = key_exists('custom_uri', $body) ? $body['custom_uri'] : '';
+
             // validating url evailability
             $ch = curl_init($urlToStore);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -75,6 +87,8 @@ class MainController extends AbstractController
                 throw new Exception("Whoops! Your URL is unreachable, or you don't specify 'url' key");
             }
             curl_close($ch);
+
+            // store URL in DB
             $shortUri = $this->storeUrlToRedis($urlToStore, $uriToStore);
             return new JsonResponse(
                 [
@@ -94,6 +108,15 @@ class MainController extends AbstractController
         }
     }
     
+    /**
+     * Storing URL and URI to hash in redis.
+     * Hash structure:
+     * hashkey: urlkey: string, urikey: string, count: int
+     *
+     * @param string $urlToStore
+     * @param string $uriToStore
+     * @return String ShortUri from redis.
+     */
     private function storeUrlToRedis(string $urlToStore, string $uriToStore = '')
     {
         if (empty($uriToStore)) {
@@ -114,6 +137,12 @@ class MainController extends AbstractController
         return $shortUri;
     }
 
+    /**
+     * Check if uri is already in database. Does not count as redirect
+     *
+     * @param string $uri
+     * @return JsonResponse Success|Error
+     */
     public function retrieveUrl(string $uri)
     {
         if (empty($this->predis->keys($uri))) {
@@ -123,12 +152,19 @@ class MainController extends AbstractController
             );
         } else {
             return new JsonResponse(
-                ["Success" => \urldecode($this->predis->hget($uri, "url"))],
+                ["Success" => true],
                 200
             );
         };
     }
 
+    /**
+     * This function doesn't redirect at any url
+     * but returns active link and counts every successful request
+     *
+     * @param string $uri
+     * @return JsonResponse Success|Error
+     */
     public function redirectTo(string $uri)
     {
         try {
@@ -150,15 +186,29 @@ class MainController extends AbstractController
             );
         }
         $where = \urldecode($where);
-        return $this->redirect("http://$where");
+        return new JsonResponse(
+            ["Success" => "http://$where"],
+            200
+        );
     }
 
-
+    /**
+     * Logger interface
+     *
+     * @param string $message
+     * @return void
+     */
     private function logging(string $message)
     {
         return $this->logger->error("RequestFrom:[$this->referer]:$message");
     }
 
+    /**
+     * Main responce providing useful information about how to use this API
+     *
+     * @param Request $request
+     * @return JsonResponse Info about service || Error message
+     */
     public function mainResponse(Request $request)
     {
         try {

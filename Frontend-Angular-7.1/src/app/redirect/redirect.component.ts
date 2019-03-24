@@ -13,12 +13,12 @@ export class RedirectComponent implements OnInit {
   Message: string = "Redirecting...";
   public href: string = "";
   constructor(private api: ApiService, @Inject(DOCUMENT) private document: any, private router: Router) { 
-    this.href = this.router.url;
+    this.href = this.router.url.slice(1);
     this.redirect(this.href);
   }
   redirect(uri: string) {
-    this.api.getUri(uri).subscribe(value => {
-      this.document.location = 'http://' + value.body.Success;
+    this.api.redirect(uri).subscribe(value => {
+      this.document.location = value.body.Success;
     },
       error => {
         this.Message = '404 - Not found';
