@@ -11,10 +11,11 @@ generate:
    requirements:
       _format: json
 retrieveUrl:
-   path: /api/{previouslyStoredUrl}
+   path: /api/{uri}
    controller: App\Controller\MainController::retrieveUrl
-   methods: GET
+   defaults: { _format: json }
+   requirements:
+      _format: json
 redirectTo:
-   path: /{previouslyStoredUri}
+   path: /{uri}
    controller: App\Controller\MainController::redirectTo
-   methods: GET

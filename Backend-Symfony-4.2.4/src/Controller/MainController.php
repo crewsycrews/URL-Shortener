@@ -18,6 +18,7 @@ class MainController extends AbstractController
     private $host;
     private $logger;
     private $referer;
+    private $predis;
     
     public function __construct(LoggerInterface $logger)
     {
@@ -27,6 +28,7 @@ class MainController extends AbstractController
         $this->version = $_ENV['APP_VERSION'];
         $this->description = $_ENV['APP_DESCRIPTION'];
         $this->logger = $logger;
+        $this->predis = new Client();
         $this->methods = [
             "generateUrl"=> [
                 "URL"=> "/api/generate",
@@ -94,53 +96,50 @@ class MainController extends AbstractController
     
     private function storeUrlToRedis(string $urlToStore, string $uriToStore = '')
     {
-        $redisClient = new Client();
         if (empty($uriToStore)) {
             $uriToStore = substr(md5($urlToStore), 0, 8);
         } else {
-            $url = $redisClient->hget($uriToStore, "url");
+            $url = $this->predis->hget($uriToStore, "url");
             if (!empty($url)) {
                 throw new Exception("Sorry, your custom_uri is already exists, try another");
             }
         }
         $uriToStore = \urlencode($uriToStore);
         $urlToStore = \urlencode($urlToStore);
-        $redisClient->hmset($uriToStore, "url", $urlToStore, "short", $uriToStore);
-        $redisClient->expire($uriToStore, strtotime("+15 days"));
-        $shortUri = $redisClient->hget($uriToStore, "short");
-        $redisClient->bgsave();
-        $redisClient->quit();
+        $this->predis->hmset($uriToStore, "url", $urlToStore, "short", $uriToStore);
+        $this->predis->expire($uriToStore, strtotime("+15 days"));
+        $shortUri = $this->predis->hget($uriToStore, "short");
+        $this->predis->bgsave();
+        $this->predis->quit();
         return $shortUri;
     }
 
-    public function retrieveUrl(string $previouslyStoredUrl)
+    public function retrieveUrl(string $uri)
     {
-        $redisClient = new Client();
-        if (empty($redisClient->keys($previouslyStoredUrl))) {
+        if (empty($this->predis->keys($uri))) {
             return new JsonResponse(
                 ["Error" => 'Provided Uri does not exist in DB'],
                 404
             );
         } else {
             return new JsonResponse(
-                ["Success" => true],
+                ["Success" => 'Provided Uri exists in DB'],
                 200
             );
         };
     }
 
-    public function redirectTo(string $previouslyStoredUri)
+    public function redirectTo(string $uri)
     {
         try {
-            $redisClient = new Client();
-            $previouslyStoredUri = \urlencode($previouslyStoredUri);
-            $where = $redisClient->hget($previouslyStoredUri, "url");
+            $uri = \urlencode($uri);
+            $where = $this->predis->hget($uri, "url");
             if (empty($where)) {
                 throw new Exception("Wrong URL! Generate Short URL first");
             }
-            $redisClient->hincrby($previouslyStoredUri, "count", 1);
-            $redisClient->bgsave();
-            $redisClient->quit();
+            $this->predis->hincrby($uri, "count", 1);
+            $this->predis->bgsave();
+            $this->predis->quit();
         } catch (Exception $e) {
             $this->logging($e->getMessage());
             return new JsonResponse(
