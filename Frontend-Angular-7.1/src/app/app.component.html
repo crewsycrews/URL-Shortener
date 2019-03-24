@@ -14,11 +14,14 @@
     </div>
     <div class="nes-field">
         <label for="uri_field">Enter your desired fancy short URI:</label>
-        <input #custom_uri type="text" id="uri_field" (keyup)="validateUri(custom_uri.value)" class="nes-input {{ validClass }}">
+        <input #custom_uri type="text" id="uri_field" (keyup)="validateUri(custom_uri.value)" class="nes-input {{ validClass }}" maxlength="8">
     </div>
-    <button type="button" class="nes-btn is-success {{ validClass == 'is-error' ? 'is-disabled' : '' }}" [disabled]="validClass === 'is-error'" (click)="generateUri(url.value,custom_uri.value)">Generate</button>
+    <button type="button" class="nes-btn is-success {{ validClass == 'is-error' ? 'is-disabled' : '' }}" style="color: #171773" [disabled]="validClass === 'is-error'" (click)="generateUri(url.value,custom_uri.value)">Generate</button>
     <div class="fix-height intended">
-      <p *ngIf="generatedUrl">Here is your generated URL: <a href="{{ generatedUrl }}">{{ generatedUrl }}</a></p>
+      <p *ngIf="generatedUrl" class="result">Here is your generated URL: 
+        <a href="{{ generatedUrl }}" target="_blank">{{ generatedUrl }}</a>
+        <img src="/assets/img/copy.png" class="copy" ngxClipboard [cbContent]="generatedUrl">
+      </p>
       <p *ngIf="error" class="nes-text is-error">{{ error }}</p>
     </div>
   </div>

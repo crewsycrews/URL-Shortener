@@ -1,14 +1,29 @@
 $bgcolor:  rgb(15,15,15);
-
+$cursor: url(https://unpkg.com/nes.css@2.1.0/assets/cursor-click.png) 14 0,pointer;
 .main
-  color: rgba(70, 70, 70, 0.64);
+  color: #171773;
+  text-shadow: 2px 2px 200px aquamarine;
 .nes-field
   margin-bottom: 1em;
 .nes-input
   text-align: center; 
+.result
+  background: rgba(255,255,255,0.5);
 .intended
   margin-top: 2em;
   margin-bottom: 2em;
 .fix-height
   height: 2.2em;
+.copy
+  max-width: 5em;
+  cursor: $cursor;
+.nes-btn
+  cursor: $cursor;
+.is-error
+  background-color: black;
+  
+a
+  color: maroon;
+  font-size: 1.5em;
+  cursor: $cursor;
   // background-color: $bgcolor;
