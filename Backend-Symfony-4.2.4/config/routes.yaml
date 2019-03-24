@@ -1,4 +1,7 @@
 index:
+   path: /
+   controller: App\Controller\MainController::mainResponse
+api:
    path: /api
    controller: App\Controller\MainController::mainResponse
    defaults: { _format: json }

@@ -123,7 +123,7 @@ class MainController extends AbstractController
             );
         } else {
             return new JsonResponse(
-                ["Success" => 'Provided Uri exists in DB'],
+                ["Success" => \urldecode($this->predis->hget($uri, "url"))],
                 200
             );
         };
@@ -135,7 +135,7 @@ class MainController extends AbstractController
             $uri = \urlencode($uri);
             $where = $this->predis->hget($uri, "url");
             if (empty($where)) {
-                throw new Exception("Wrong URL! Generate Short URL first");
+                throw new Exception("Wrong URL! Generate Short URL first with /api/generate");
             }
             $this->predis->hincrby($uri, "count", 1);
             $this->predis->bgsave();
