@@ -122,6 +122,9 @@ class MainController extends AbstractController
         if (empty($uriToStore)) {
             $uriToStore = substr(md5($urlToStore), 0, 8);
         } else {
+            if (strlen($uriToStore) > 8) {
+                throw new Exception("Uri must contain max 8 characters");
+            }
             $url = $this->predis->hget($uriToStore, "url");
             if (!empty($url)) {
                 throw new Exception("Sorry, your custom_uri is already exists, try another");
