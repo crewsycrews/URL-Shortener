@@ -111,7 +111,7 @@ class MainController extends AbstractController
     /**
      * Storing URL and URI to hash in redis.
      * Hash structure:
-     * hashkey: urlkey: string, urikey: string, count: int
+     * hashkey(by URI): url: string, uri: string, count: int
      *
      * @param string $urlToStore
      * @param string $uriToStore
