@@ -1,5 +1,5 @@
 # Crews URL Shortener
-Test assignment for Ambrella IT.
+Test assignment for Umbrella IT.
 ## Structure:
 Project divided in two parts:  
  - Back-end api service written on Symfony 4.2.4
