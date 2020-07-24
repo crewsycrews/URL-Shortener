@@ -3,7 +3,7 @@
     {{ title }}
   </h1>
   <div class="intended">
-    <i class="nes-pokeball"></i>
+    <i class="nes-pokeball" style="transform: rotateY(180deg)"></i>
     <a href="https://github.com/crewsycrews/URL-Shortener"><i class="nes-octocat animate"></i></a>
     <i class="nes-pokeball"></i>
   </div>
@@ -16,11 +16,16 @@
       <input #custom_uri type="text" id="uri_field" (keyup)="validateUri(custom_uri.value)" class="nes-input {{ validClass }}" maxlength="8">
   </div>
   <button type="button" class="nes-btn is-success {{ validClass == 'is-error' ? 'is-disabled' : '' }}" style="color: #171773" [disabled]="validClass === 'is-error'" (click)="generateUri(url.value,custom_uri.value)">Generate</button>
-  <div class="fix-height intended">
-    <p *ngIf="generatedUri" class="result">Here is your generated URL: 
-      <a href="{{ appUrl + '/' + generatedUri }}" target="_blank">{{ appUrl + '/' + generatedUri }}</a>
-      <img src="/assets/img/copy.png" class="copy" ngxClipboard [cbContent]="appUrl + '/' + generatedUri">
-    </p>
+  <div class="intended container {{ generatedUri ? 'result' : '' }}">
+    <div class="row">
+      <p *ngIf="generatedUri" class="col-sm">
+        Here is your generated URL: 
+      </p>
+    </div>
+    <div *ngIf="generatedUri" class="row">
+      <a href="{{ appUrl + '/' + generatedUri }}" class="col-sm" target="_blank">{{ appUrl + '/' + generatedUri }}</a>
+    </div>
+    <button *ngIf="generatedUri" ngxClipboard [cbContent]="appUrl + '/' + generatedUri" style="color: #171773; margin-top: 1em;" type="button" class="nes-btn is-success">Copy</button>
     <p *ngIf="error" class="nes-text is-error-info">{{ error }}</p>
   </div>
 </div>

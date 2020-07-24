@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  api: "http://212.237.26.46:8000/api",
+  api: "https://api.us.crewsis.me/api",
   devPort: undefined
 };
